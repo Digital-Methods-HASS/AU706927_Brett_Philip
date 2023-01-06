@@ -1,0 +1,56 @@
+---
+title: "Web scraping W48"
+author: "Philip Elgaard Brett"
+date: "2022-12-04"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Task 
+I am doing task 2.2) and using the 'rvest' library to scrape data of my interest. I will be using worldometers data on world population do determine the yearly change in population in the largest countries in the world. 
+
+##Solution 
+First I install the neccesary R packages 
+
+```{r libraries}
+library(rvest)
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(janitor)
+```
+
+##Scraping the data
+Next, I will scrape the content of the website and extract the HTML table:
+
+```{r scrape-cells}
+url <- "https://www.worldometers.info/world-population/population-by-country" 
+  url_html <- read_html(url) 
+```
+
+##I now extract the whole HTML table through the <table> tag.
+
+```{r scrape-table}
+population <- url_html %>% 
+ html_nodes("table") %>%
+ html_table()  #str(population) turns out to be a list
+str(population)
+population[[1]]
+population
+```
+
+##Converting 
+Now I convert my webscraping to a useful dataframe in R
+
+```{r html-to-df}
+population<- do.call(cbind,unlist(population, recursive = FALSE)) 
+head(population)
+```
+I am now done with the scraping and have the data from the database sheet in a dataframe.
+
+I have a clean table so I can see the yearly change in population in the largest countries. 
