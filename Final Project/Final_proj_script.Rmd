@@ -1,0 +1,147 @@
+---
+title: "Final Project"
+author: "Philip Elgaard Brett"
+date: "2022-12-08"
+output: html_document
+---
+
+#Installing the necessary packages 
+```{r}
+library(tidyverse)
+library(ggplot2)
+```
+
+#Importing my datasets into R
+```{r}
+BNP1 <- read_csv2("Data2/BNP_development.csv")
+Voting3 <- read_csv2("Data2/Voting.csv")
+```
+
+##Inspecting my data 
+Using the str() function it can get an overview of how RStudio reads it. 
+```{r}
+str(Voting3)
+```
+I can see that it reads it correctly, with both Year and Percentage of Votes being registered as numeric values, and Party being read as characters
+
+#Plotting my GDP data 
+I'm plotting my data into a graph to show the GDP (BNP in danish) development in Denmark from 1970-2021
+Using geom_col() to show the development. 
+Also using the scale_x_continuous function I found on https://www.statology.org/ggplot2-scale_x_continuous/ to make the visualization more precise. 
+```{r}
+ggplot(data = BNP1) + 
+  geom_col(aes(x = Year, y = BNP)) +
+  scale_y_continuous(breaks = seq(-6, 6, by = 1)) +
+  scale_x_continuous(breaks = seq(1970, 2022, by = 4)) +
+  labs(title = 'BNP development')
+```
+
+##Trying another visualization 
+To get another overlook I plot my data again, this time using geom_line()
+```{r}
+ggplot(data = BNP1) + 
+  geom_line(aes(x = Year, y = BNP, color = 'Red')) +
+    scale_y_continuous(breaks = seq(-6, 6, by = 1)) +
+    scale_x_continuous(breaks = seq(1970, 2022, by = 4)) ##Husk at kildehenvise koden 
+```
+
+#Plotting overall election results
+Now I am plotting my data on election results from 1971-2019 using geom_col() and adding color. 
+```{r}
+ggplot(data = Voting3) +
+  geom_col(aes(x = Year, y = Percentage_of_votes, color = Party, fill=Party)) + 
+  labs(title = "Voting Percentage")
+```
+#Plotting overall election results again 
+To get a clearer and more pleasing visualization, I use geom_line() this time
+```{r}
+ggplot(data = Voting3) +
+  geom_line(mapping = aes(x = Year, y = Percentage_of_votes, color = Party)) +
+  labs(title = "Voting")
+```
+##Merging the parties into groups 
+The visualization above is a bit messy, because of all the different parties, so in order to make the visualizations simpler and more transparent, I will merge the different parties into three groups. Left-wing parties, right-wing parties and center parties. '
+
+I will use the filter() function so merge the different groups 
+```{r}
+Left_wing <- Voting3 %>% 
+  filter(Party == "SF" | Party == "EL" | Party == "ALT" | Party == "VS" | Party == "DKP" | Party == "FK")
+```
+
+Now visualizing the data left-wing data with geom_line 
+```{r}
+ggplot(data = Left_wing) +
+  geom_line(mapping = aes(x = Year, y = Percentage_of_votes, color = Party)) +
+  labs(title = "Left wing votes 1971-2019")
+```
+Now doing the same with right-wing parties 
+```{r}
+Right_wing <- Voting3 %>% 
+  filter(Party == "DF" | Party == "FP" | Party == "NB" | Party == "LA")
+```
+
+Visualizing the right-wing votes 
+```{r}
+ggplot(data = Right_wing) +
+  geom_line(mapping = aes(x = Year, y = Percentage_of_votes, color = Party)) +
+  labs(title = "Right wing votes 1971-2019")
+```
+Merging the danish danish centre parties 
+```{r}
+Centre_parties <- Voting3 %>% 
+  filter(Party == "S" | Party == "V" | Party == "KF" | Party == "RV" | Party == "CD" | Party == "DR" | Party == "KRF/KD")
+```
+
+Visualizing the center-parties 
+```{r}
+ggplot(data = Centre_parties) +
+  geom_line(mapping = aes(x = Year, y = Percentage_of_votes, color = Party)) +
+  labs(title = "Centre votes 1971-2019")
+```
+
+##Summarizing my Left, Center and Right-wing votes in order to make the final visualisation more straightforward
+Summarizing my center parties 
+```{r}
+Centre_parties_summarized <- Centre_parties %>% 
+  drop_na(Percentage_of_votes) %>% 
+  group_by(Year) %>% 
+  summarise(total_block_votes_pct = sum(Percentage_of_votes)) 
+```
+
+Summarizing the Left Wing votes into one group.
+```{r}
+Left_parties_summarized <- Left_wing %>%
+  drop_na(Percentage_of_votes) %>% 
+  group_by(Year) %>% 
+  summarise(total_block_votes_pct = sum(Percentage_of_votes))
+```
+
+Summarizing the Right Wing votes into one gruop 
+```{r}
+Right_parties_summarized <- Right_wing %>% 
+  drop_na(Percentage_of_votes) %>% 
+  group_by(Year) %>% 
+  summarise(total_block_votes_pct = sum(Percentage_of_votes))
+```
+
+##Visualizating the three groups 
+Now showing the three groups together with geom_line()
+```{r}
+ggplot() + 
+   geom_line(data = Left_parties_summarized, aes(x = Year, y = total_block_votes_pct, color = "Left-wing")) + 
+  geom_line(data = Right_parties_summarized, aes(x = Year, y = total_block_votes_pct, color = "Right -wing")) + 
+  geom_line(data = Centre_parties_summarized, aes( x= Year, y = total_block_votes_pct, color = "Centre-parties")) +
+  scale_x_continuous(breaks = seq(1970, 2022, by = 4))
+```
+##Visualizing GDP development and voting trends together 
+Applying multiple dataframes to show GDP development and election results together and making them easier to compare. 
+```{r}
+ggplot() + 
+  geom_line(data = Left_parties_summarized, aes(x = Year, y = total_block_votes_pct, color = "Left-wing")) + 
+  geom_line(data = Right_parties_summarized, aes(x = Year, y = total_block_votes_pct, color = "Right -wing")) + 
+  geom_line(data = Centre_parties_summarized, aes( x= Year, y = total_block_votes_pct, color = "Centre-parties")) + 
+  geom_line(data = BNP1, aes(x = Year, y = BNP1$BNP, color = "BNP")) +
+  scale_x_continuous(breaks = seq(1970, 2022, by = 4))
+```
+#Conclusion 
+I can now see if there is any correlation between the fluctuation in the GDP development and election results. 
